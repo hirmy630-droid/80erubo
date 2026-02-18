@@ -79,16 +79,18 @@ input, select { user-select: auto; }
 
 .tab-btn.active {
     background: linear-gradient(180deg, #636366 0%, #48484a 100%);
-    color: white;
+    /* 文字色はモード別に下部で制御します */
     box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
+/* タブ文字色の個別設定 */
+.mode-80 .tab-btn[data-mode="80"].active { color: var(--accent-purple); }
+.mode-80-leg .tab-btn[data-mode="80-leg"].active { color: var(--accent-blue); }
+
 .header { text-align: center; margin-bottom: 20px; }
 
-/* タイトル色の動的変更 */
-.title { font-size: 24px; font-weight: 700; margin: 0; transition: color 0.3s ease; }
-.mode-80 .title { color: var(--accent-purple); }
-.mode-80-leg .title { color: var(--accent-blue); }
+/* タイトルの文字色を明るいグレーに固定 */
+.title { font-size: 24px; font-weight: 700; margin: 0; color: #e5e5ea; }
 
 .subtitle { font-size: 14px; color: #8e8e93; letter-spacing: 0.15em; font-weight: 600; margin-top: 4px; }
 
@@ -154,7 +156,7 @@ input, select { user-select: auto; }
 /* 足付の時の中間計算結果表示 */
 .intermediate-display {
     text-align: center;
-    font-size: 14px; /* 13pxから14pxへ変更 */
+    font-size: 14px;
     font-weight: 700;
     color: var(--accent-blue);
     margin-top: 4px;
@@ -423,7 +425,6 @@ function calc() {
         const constVal = sizeConstants[size];
         const c = inputVal - (legVal + constVal);
         
-        // ラベル名を「寸法 (芯-芯)」に変更
         elements.cValueEl.textContent = `寸法 (芯-芯): ${formatNumber(Math.round(c * 10) / 10)} mm`;
         
         f = (c / cos10) - ((e - d) * 2);
