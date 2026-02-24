@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>80エルボ計算 統合ダーク版</title>
+<title>80°エルボ・距離計算ツール</title>
 
 <style>
 :root {
@@ -20,6 +20,8 @@
     /* モード別カラー */
     --accent-purple: #af52de;
     --accent-blue: #007aff;
+    --accent-dist: #30d158; /* 距離計算用グリーン */
+    --accent-line: #3b82f6; /* 図面の寸法線用ブルー */
 }
 
 * {
@@ -49,6 +51,7 @@ body {
     flex-direction: column;
     position: relative;
     user-select: none;
+    margin-bottom: 40px;
 }
 
 input, select { user-select: auto; }
@@ -68,30 +71,32 @@ input, select { user-select: auto; }
     padding: 12px 4px;
     border: none;
     border-radius: 9px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     background: transparent;
     color: #8e8e93;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     line-height: 1.2;
+    white-space: nowrap;
+}
+
+@media (min-width: 380px) {
+    .tab-btn { font-size: 14px; }
 }
 
 .tab-btn.active {
     background: linear-gradient(180deg, #636366 0%, #48484a 100%);
-    /* 文字色はモード別に下部で制御します */
     box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 /* タブ文字色の個別設定 */
 .mode-80 .tab-btn[data-mode="80"].active { color: var(--accent-purple); }
 .mode-80-leg .tab-btn[data-mode="80-leg"].active { color: var(--accent-blue); }
+.mode-dist .tab-btn[data-mode="dist"].active { color: var(--accent-dist); }
 
 .header { text-align: center; margin-bottom: 20px; }
-
-/* タイトルの文字色を明るいグレーに固定 */
 .title { font-size: 24px; font-weight: 700; margin: 0; color: #e5e5ea; }
-
 .subtitle { font-size: 14px; color: #8e8e93; letter-spacing: 0.15em; font-weight: 600; margin-top: 4px; }
 
 .result-display-box {
@@ -106,18 +111,16 @@ input, select { user-select: auto; }
     border-radius: 20px;
 }
 
-.mode-80 .result-display-box { 
-    background: var(--accent-purple); 
-    box-shadow: 0 10px 20px rgba(175, 82, 222, 0.4); 
-}
-.mode-80-leg .result-display-box { 
-    background: var(--accent-blue); 
-    box-shadow: 0 10px 20px rgba(0, 122, 255, 0.4); 
-}
+.mode-80 .result-display-box { background: var(--accent-purple); box-shadow: 0 10px 20px rgba(175, 82, 222, 0.4); }
+.mode-80-leg .result-display-box { background: var(--accent-blue); box-shadow: 0 10px 20px rgba(0, 122, 255, 0.4); }
+.mode-dist .result-display-box { background: var(--accent-dist); box-shadow: 0 10px 20px rgba(48, 209, 88, 0.4); }
 
-.label-inside { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-.result-value-text { font-size: 40px; font-weight: 900; display: flex; align-items: baseline; gap: 4px; }
+.label-inside { font-size: 15px; font-weight: 700; margin-bottom: 2px; color: #ffffff; }
+.result-value-text { font-size: 40px; font-weight: 900; display: flex; align-items: baseline; gap: 4px; color: #ffffff; }
 .result-unit-text { font-size: 18px; font-weight: 700; opacity: 0.9; }
+
+.panel { display: none; }
+.panel.active { display: block; }
 
 .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
 .size-row { display: flex; gap: 10px; }
@@ -134,7 +137,7 @@ input, select { user-select: auto; }
     align-items: center;
     position: relative;
     overflow: hidden;
-    transition: border 0.3s ease;
+    transition: border-color 0.3s ease;
 }
 
 .input-box.large { height: 70px; border-radius: 18px; background: #121214; }
@@ -142,6 +145,7 @@ input, select { user-select: auto; }
 
 .mode-80 .accent-border { border: 2.5px solid var(--accent-purple); }
 .mode-80-leg .accent-border { border: 2.5px solid var(--accent-blue); }
+.mode-dist .accent-border { border: 2.5px solid var(--accent-line); }
 
 .select, .input {
     width: 100%; background: transparent; border: none; color: #ffffff; text-align: center; outline: none;
@@ -150,46 +154,34 @@ input, select { user-select: auto; }
 .input { font-size: 34px; font-weight: 900; }
 .input.small-input { font-size: 24px; }
 
+.input::placeholder { font-size: 15px; font-weight: 400; color: var(--ios-placeholder); }
+
 .static-value { width: 100%; color: #aeaeb2; display: flex; justify-content: center; align-items: baseline; gap: 2px; font-size: 24px; font-weight: 800; }
 .static-unit { font-size: 15px; font-weight: 600; }
 
-/* 足付の時の中間計算結果表示 */
 .intermediate-display {
-    text-align: center;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--accent-blue);
-    margin-top: 4px;
-    min-height: 1.2em;
-    opacity: 0.8;
-    display: none;
+    text-align: center; font-size: 14px; font-weight: 700; color: var(--accent-blue); margin-top: 4px; min-height: 1.2em; opacity: 0.8;
 }
-.mode-80-leg .intermediate-display { display: block; }
 
 .save-btn {
-    width: 100%; 
-    height: 44px; 
-    color: #ffffff; 
-    border: none; 
-    border-radius: 14px; 
-    font-size: 16px; 
-    font-weight: 900;
-    margin-bottom: 28px; 
-    position: relative;
-    top: 0;
-    transition: all 0.1s ease;
+    width: 100%; height: 44px; color: #ffffff; border: none; border-radius: 14px; font-size: 16px; font-weight: 900;
+    margin-bottom: 28px; position: relative; top: 0; transition: all 0.1s ease;
     background: linear-gradient(180deg, var(--ios-orange-light) 0%, var(--ios-orange) 100%);
-    box-shadow: 0 4px 0 var(--ios-orange-dark), 0 8px 15px rgba(0,0,0,0.5); 
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    box-shadow: 0 4px 0 var(--ios-orange-dark), 0 8px 15px rgba(0,0,0,0.5); text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
-
 .save-btn:active { top: 3px; box-shadow: 0 1px 0 var(--ios-orange-dark), 0 3px 10px rgba(0,0,0,0.4); }
 .save-btn:disabled { background: #2c2c2e !important; color: #48484a; box-shadow: none !important; top: 0 !important; cursor: default; }
 .save-btn.success { background: linear-gradient(180deg, #34c759 0%, #248a3d 100%); box-shadow: 0 4px 0 #1a632c, 0 8px 15px rgba(0,0,0,0.5); }
+
+/* シルバーボタンのデザイン */
+.btn-silver-3d {
+    width: 50%; height: 46px; border: none; border-radius: 18px; font-size: 17px; font-weight: 800;
+    background: linear-gradient(180deg, #e5e5ea 0%, #aeaeb2 100%); color: #3a3a3c;
+    border-bottom: 5px solid #636366; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    margin: 0 auto; display: block; position: relative; transition: all 0.1s;
+}
+.btn-silver-3d:active { transform: translateY(3px); border-bottom-width: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
 .history-section { border-top: 1px solid #38383a; padding-top: 16px; }
 .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -224,12 +216,9 @@ input, select { user-select: auto; }
 
 .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #8e8e93; letter-spacing: 0.05em; font-weight: 600; }
 
-.mode-80 #main-input-label { color: var(--accent-purple); }
-.mode-80-leg #main-input-label { color: var(--accent-blue); }
-
-/* 足寸法コンテナの表示制御 */
-#leg-input-container { display: none; }
-.mode-80-leg #leg-input-container { display: flex; }
+.diagram-container {
+    margin-top: 24px; background: #000000; border-radius: 20px; padding: 12px; border: 1px solid var(--ios-border);
+}
 </style>
 </head>
 
@@ -250,14 +239,15 @@ input, select { user-select: auto; }
     <div class="tab-container">
         <button class="tab-btn active" data-mode="80">80°エルボ</button>
         <button class="tab-btn" data-mode="80-leg">足付 80°エルボ</button>
+        <button class="tab-btn" data-mode="dist">距離計算</button>
     </div>
 
     <div class="header">
         <div class="title" id="page-title">80°エルボ 計算</div>
         <div class="subtitle">KYOWA ROOF</div>
 
-        <div class="result-display-box">
-            <div class="label-inside" id="result-label" style="color: #ffffff;">切寸法</div>
+        <div class="result-display-box" onclick="copyResult()">
+            <div class="label-inside" id="result-label">切寸法</div>
             <div class="result-value-text">
                 <span id="result">---</span>
                 <span class="result-unit-text">mm</span>
@@ -265,53 +255,118 @@ input, select { user-select: auto; }
         </div>
     </div>
 
-    <div class="input-group">
-        <div class="size-row">
+    <!-- エルボ計算用パネル -->
+    <div id="panel-elbow" class="panel active">
+        <div class="input-group">
+            <div class="size-row">
+                <div class="input-container">
+                    <div class="label-outside">サイズ</div>
+                    <div class="input-box accent-border">
+                        <select id="size" class="select">
+                            <option value="75">75</option>
+                            <option value="100" selected>100</option>
+                            <option value="125">125</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-container" id="leg-input-container" style="display: none;">
+                    <div class="label-outside">足寸法</div>
+                    <div class="input-box accent-border">
+                        <input id="leg-input" class="input small-input" type="text" inputmode="decimal" placeholder="0">
+                    </div>
+                </div>
+                <div class="input-container" id="d-container">
+                    <div class="label-outside">重寸法</div>
+                    <div class="input-box static-box">
+                        <div class="static-value"><span id="d">--</span><span class="static-unit">mm</span></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="input-container">
-                <div class="label-outside">サイズ</div>
-                <div class="input-box accent-border">
-                    <select id="size" class="select">
-                        <option value="75">75</option>
-                        <option value="100" selected>100</option>
-                        <option value="125">125</option>
-                    </select>
+                <div class="label-outside" id="main-input-label">寸法 (mm)</div>
+                <div class="input-box large accent-border">
+                    <input id="input" class="input" type="text" inputmode="decimal" placeholder="0">
                 </div>
-            </div>
-            <div class="input-container" id="leg-input-container">
-                <div class="label-outside">足寸法</div>
-                <div class="input-box accent-border">
-                    <input id="leg-input" class="input small-input" type="text" inputmode="decimal" placeholder="0">
-                </div>
-            </div>
-            <div class="input-container" id="d-container">
-                <div class="label-outside">重寸法</div>
-                <div class="input-box static-box">
-                    <div class="static-value"><span id="d">--</span><span class="static-unit">mm</span></div>
-                </div>
+                <div id="intermediate-val" class="intermediate-display"></div>
             </div>
         </div>
 
-        <div class="input-container">
-            <div class="label-outside" id="main-input-label">寸法 (mm)</div>
-            <div class="input-box large accent-border" id="input-box-large">
-                <input id="input" class="input" type="text" inputmode="decimal" placeholder="0">
+        <button id="save-btn" class="save-btn" disabled>★履歴に保存</button>
+
+        <div class="history-section">
+            <div class="history-header">
+                <span class="history-title">保存された履歴</span>
+                <button id="history-clear-all" class="history-clear-all">履歴をクリア</button>
             </div>
-            <!-- 足付時の中間計算表示エリア -->
-            <div id="intermediate-val" class="intermediate-display"></div>
+            <div id="history-list" class="history-list"></div>
         </div>
+        <div class="footer">★：ボタン保存 / 自動保存（3件）</div>
     </div>
 
-    <button id="save-btn" class="save-btn" disabled>★履歴に保存</button>
-
-    <div class="history-section">
-        <div class="history-header">
-            <span class="history-title">保存された履歴</span>
-            <button id="history-clear-all" class="history-clear-all">履歴をクリア</button>
+    <!-- 距離計算用パネル -->
+    <div id="panel-dist" class="panel">
+        <div class="input-group">
+            <div class="size-row" style="margin-bottom: 10px;">
+                <div class="input-container">
+                    <div class="label-outside">足長</div>
+                    <div class="input-box">
+                        <input id="dist-input-b" class="input small-input" type="text" inputmode="numeric" placeholder="足までの場合 0">
+                    </div>
+                </div>
+                <div class="input-container">
+                    <div class="label-outside">選択</div>
+                    <div class="input-box">
+                        <select id="dist-select-x" class="select small-input">
+                            <option value="45">75</option>
+                            <option value="57" selected>100</option>
+                            <option value="70">125</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="size-row">
+                <div class="input-container">
+                    <div class="label-outside">直線距離</div>
+                    <div class="input-box accent-border">
+                        <input id="dist-input-h" class="input small-input" type="text" inputmode="numeric" placeholder="壁までの距離">
+                    </div>
+                </div>
+                <div class="input-container">
+                    <div class="label-outside">移動寸法</div>
+                    <div class="input-box accent-border">
+                        <input id="dist-input-w" class="input small-input" type="text" inputmode="numeric" placeholder="落口の移動">
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="history-list" class="history-list"></div>
-    </div>
 
-    <div class="footer" id="footer-text">★：ボタン保存（無制限） / 自動保存（3件）</div>
+        <button id="dist-clear" class="btn-silver-3d">クリア</button>
+
+        <div class="diagram-container">
+            <svg viewBox="0 0 360 210" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+                <line x1="100" y1="10" x2="160" y2="10" stroke="white" stroke-width="2" />
+                <line x1="140" y1="10" x2="140" y2="25" stroke="white" stroke-width="2" />
+                <circle cx="140" cy="45" r="16.2" fill="none" stroke="white" stroke-width="2" />
+                <line x1="140" y1="45" x2="280" y2="125" stroke="white" stroke-width="3" />
+                <rect x="180" y="65" width="80" height="36" rx="8" fill="rgba(0,0,0,0.8)" stroke="white" stroke-width="1.5" />
+                <text id="dist-diag-res" x="220" y="91" fill="white" font-size="22" font-weight="900" text-anchor="middle">---</text>
+                <circle cx="280" cy="125" r="16.2" fill="none" stroke="white" stroke-width="2" />
+                <line x1="100" y1="10" x2="100" y2="125" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="90" y1="10" x2="100" y2="10" stroke="#3b82f6" stroke-width="1.5" />
+                <line x1="90" y1="125" x2="280" y2="125" stroke="#3b82f6" stroke-width="1" opacity="0.4" stroke-dasharray="3" />
+                <line x1="95" y1="15" x2="105" y2="5" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="95" y1="130" x2="105" y2="120" stroke="#3b82f6" stroke-width="2.5" />
+                <text x="5" y="75" fill="#3b82f6" font-size="18" font-weight="bold">直線距離</text>
+                <line x1="140" y1="155" x2="280" y2="155" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="140" y1="125" x2="140" y2="165" stroke="#3b82f6" stroke-width="1" opacity="0.4" stroke-dasharray="3" />
+                <line x1="280" y1="125" x2="280" y2="165" stroke="#3b82f6" stroke-width="1" opacity="0.4" stroke-dasharray="3" />
+                <line x1="135" y1="160" x2="145" y2="150" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="275" y1="160" x2="285" y2="150" stroke="#3b82f6" stroke-width="2.5" />
+                <text x="210" y="195" fill="#3b82f6" font-size="18" font-weight="bold" text-anchor="middle">移動寸法</text>
+            </svg>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -321,16 +376,15 @@ const data = {
 };
 
 const sizeConstants = { "75": 45, "100": 57, "125": 70 };
-
-const storageKey = 'kyowa_elbow_integrated_v8';
+const storageKey = 'kyowa_elbow_integrated_v9';
 let currentMode = "80";
 let histories = JSON.parse(localStorage.getItem(storageKey)) || [];
-let currentCalculatedResult = null;
 let lastSavedTimestamp = 0;
 
 const tabStates = {
     "80": { input: "", leg: "", size: "100" },
-    "80-leg": { input: "", leg: "", size: "100" }
+    "80-leg": { input: "", leg: "", size: "100" },
+    "dist": { b: "", h: "", w: "", x: "57" }
 };
 
 const elements = {
@@ -338,10 +392,10 @@ const elements = {
     tabBtns: document.querySelectorAll(".tab-btn"),
     pageTitle: document.getElementById("page-title"),
     resultLabel: document.getElementById("result-label"),
-    mainInputLabel: document.getElementById("main-input-label"),
     sizeEl: document.getElementById("size"),
     inputEl: document.getElementById("input"),
     legInputEl: document.getElementById("leg-input"),
+    legContainer: document.getElementById("leg-input-container"),
     saveBtn: document.getElementById("save-btn"),
     dEl: document.getElementById("d"),
     resultEl: document.getElementById("result"),
@@ -351,40 +405,77 @@ const elements = {
     modal: document.getElementById("modal-overlay"),
     modalMsg: document.getElementById("modal-msg"),
     modalCancel: document.getElementById("modal-cancel"),
-    modalConfirm: document.getElementById("modal-confirm")
+    modalConfirm: document.getElementById("modal-confirm"),
+    panelElbow: document.getElementById("panel-elbow"),
+    panelDist: document.getElementById("panel-dist"),
+    // 距離計算用
+    distB: document.getElementById("dist-input-b"),
+    distH: document.getElementById("dist-input-h"),
+    distW: document.getElementById("dist-input-w"),
+    distX: document.getElementById("dist-select-x"),
+    distDiagRes: document.getElementById("dist-diag-res")
 };
 
 function formatNumber(num) {
-    if (num === null || isNaN(num)) return "---";
+    if (num === null || isNaN(num) || num === "") return "---";
     const parts = num.toString().split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return parts.join(".");
 }
 
-function unformatNumber(str) { return str.replace(/,/g, ""); }
+function unformatNumber(str) { return str.toString().replace(/,/g, ""); }
 
 function switchMode(mode) {
     if (mode === currentMode) return;
-    tabStates[currentMode].input = elements.inputEl.value;
-    tabStates[currentMode].leg = elements.legInputEl.value;
-    tabStates[currentMode].size = elements.sizeEl.value;
+    
+    // 現在の状態を保存
+    if (currentMode === 'dist') {
+        tabStates.dist.b = elements.distB.value;
+        tabStates.dist.h = elements.distH.value;
+        tabStates.dist.w = elements.distW.value;
+        tabStates.dist.x = elements.distX.value;
+    } else {
+        tabStates[currentMode].input = elements.inputEl.value;
+        tabStates[currentMode].leg = elements.legInputEl.value;
+        tabStates[currentMode].size = elements.sizeEl.value;
+    }
 
     currentMode = mode;
     elements.tabBtns.forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
     elements.body.className = `mode-${mode}`;
     
-    const titleMap = { "80": "80°エルボ", "80-leg": "足付 80°エルボ" };
-    elements.pageTitle.textContent = `${titleMap[mode]} 計算`;
-    
-    elements.inputEl.value = tabStates[currentMode].input;
-    elements.legInputEl.value = tabStates[currentMode].leg;
-    elements.sizeEl.value = tabStates[currentMode].size;
-    
-    calc();
-    renderHistory();
+    // UI表示の切り替え
+    if (mode === 'dist') {
+        elements.pageTitle.textContent = "距離計算";
+        elements.resultLabel.textContent = "芯-芯寸法";
+        elements.panelElbow.classList.remove('active');
+        elements.panelDist.classList.add('active');
+        
+        elements.distB.value = tabStates.dist.b;
+        elements.distH.value = tabStates.dist.h;
+        elements.distW.value = tabStates.dist.w;
+        elements.distX.value = tabStates.dist.x;
+        calcDist();
+    } else {
+        const titleMap = { "80": "80°エルボ", "80-leg": "足付 80°エルボ" };
+        elements.pageTitle.textContent = `${titleMap[mode]} 計算`;
+        elements.resultLabel.textContent = "切寸法";
+        elements.panelElbow.classList.add('active');
+        elements.panelDist.classList.remove('active');
+        elements.legContainer.style.display = (mode === '80-leg') ? 'flex' : 'none';
+        
+        elements.inputEl.value = tabStates[currentMode].input;
+        elements.legInputEl.value = tabStates[currentMode].leg;
+        elements.sizeEl.value = tabStates[currentMode].size;
+        calcElbow();
+        renderHistory();
+    }
+    if (document.activeElement) document.activeElement.blur();
+    window.scrollTo(0, 0);
 }
 
-function calc() {
+// 80エルボ計算
+function calcElbow() {
     const size = elements.sizeEl.value;
     let valStr = elements.inputEl.value;
     let rawInput = unformatNumber(valStr).replace(/[^\d.]/g, "");
@@ -402,7 +493,6 @@ function calc() {
         elements.resultEl.textContent = "---";
         elements.cValueEl.textContent = "";
         elements.saveBtn.disabled = true;
-        currentCalculatedResult = null;
         return;
     }
 
@@ -415,30 +505,58 @@ function calc() {
         elements.cValueEl.textContent = "";
     } else if (currentMode === "80-leg") {
         const legValStr = unformatNumber(elements.legInputEl.value);
-        const legVal = parseFloat(legValStr);
-        if (isNaN(legVal) || legValStr === "") {
-            elements.resultEl.textContent = "---";
-            elements.cValueEl.textContent = "";
-            elements.saveBtn.disabled = true;
-            return;
-        }
+        const legVal = legValStr === "" ? 0 : parseFloat(legValStr);
         const constVal = sizeConstants[size];
         const c = inputVal - (legVal + constVal);
         
         elements.cValueEl.textContent = `寸法 (芯-芯): ${formatNumber(Math.round(c * 10) / 10)} mm`;
-        
         f = (c / cos10) - ((e - d) * 2);
         resultFormatted = formatNumber(Math.ceil(f));
     }
     
     elements.resultEl.textContent = resultFormatted;
     elements.saveBtn.disabled = false;
-    currentCalculatedResult = { 
-        mode: currentMode, size, 
-        input: elements.inputEl.value, 
-        leg: currentMode === "80-leg" ? elements.legInputEl.value : null,
-        result: resultFormatted 
-    };
+}
+
+// 距離計算
+function calcDist() {
+    const hRaw = unformatNumber(elements.distH.value);
+    const wRaw = unformatNumber(elements.distW.value);
+    const bRaw = unformatNumber(elements.distB.value);
+    const xVal = parseFloat(elements.distX.value);
+
+    // 直線距離(h)と移動寸法(w)があれば計算
+    if (!hRaw || !wRaw) {
+        elements.resultEl.textContent = "---";
+        elements.distDiagRes.textContent = "---";
+        return;
+    }
+
+    const h = parseFloat(hRaw);
+    const w = parseFloat(wRaw);
+    const b = bRaw === "" ? 0 : parseFloat(bRaw);
+    
+    const A = h - (b + xVal);
+    const resultSq = (A * A) + (w * w);
+
+    if (resultSq < 0) {
+        elements.resultEl.textContent = "エラー";
+        elements.distDiagRes.textContent = "Err";
+    } else {
+        const res = Math.ceil(Math.sqrt(resultSq));
+        const formatted = formatNumber(res);
+        elements.resultEl.textContent = formatted;
+        elements.distDiagRes.textContent = formatted;
+    }
+}
+
+function handleInputChange(e) {
+    const el = e.target;
+    let val = unformatNumber(el.value).replace(/[^\d.]/g, "");
+    if (val !== "") el.value = formatNumber(val);
+    
+    if (currentMode === 'dist') calcDist();
+    else calcElbow();
 }
 
 function renderHistory() {
@@ -478,7 +596,19 @@ function renderHistory() {
 
 function saveToHistory(method = 'enter') {
     const now = Date.now();
-    if (now - lastSavedTimestamp < 300 || !currentCalculatedResult) return;
+    if (now - lastSavedTimestamp < 300 || currentMode === 'dist') return;
+    
+    const resVal = elements.resultEl.textContent;
+    if (resVal === "---") return;
+
+    const currentResult = { 
+        mode: currentMode, 
+        size: elements.sizeEl.value, 
+        input: elements.inputEl.value, 
+        leg: currentMode === "80-leg" ? elements.legInputEl.value : null,
+        result: resVal 
+    };
+
     if (method === 'enter') {
         const autos = histories.filter(h => h.mode === currentMode && h.method === 'enter');
         if (autos.length >= 3) {
@@ -486,7 +616,7 @@ function saveToHistory(method = 'enter') {
             if (oldestIdx !== -1) histories.splice(oldestIdx, 1);
         }
     }
-    histories.push({ ...currentCalculatedResult, timestamp: now, method: method });
+    histories.push({ ...currentResult, timestamp: now, method: method });
     if (histories.length > 500) histories.shift();
     localStorage.setItem(storageKey, JSON.stringify(histories));
     renderHistory();
@@ -498,13 +628,40 @@ function saveToHistory(method = 'enter') {
     }
 }
 
-elements.saveBtn.onclick = () => saveToHistory('button');
-elements.inputEl.oninput = calc;
-elements.legInputEl.oninput = calc;
-elements.sizeEl.onchange = () => { calc(); setTimeout(() => elements.inputEl.focus(), 100); };
+function copyResult() {
+    const val = elements.resultEl.innerText;
+    if (val === "---" || val === "エラー") return;
+    const temp = document.createElement('textarea');
+    temp.value = unformatNumber(val);
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand('copy');
+    document.body.removeChild(temp);
+    
+    // Toast表示
+    const toast = document.createElement('div');
+    toast.style.cssText = "position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#0a84ff; color:white; padding:10px 24px; border-radius:50px; font-weight:bold; z-index:3000;";
+    toast.innerText = "コピーしました";
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+
+// イベント設定
 elements.tabBtns.forEach(btn => btn.onclick = () => switchMode(btn.dataset.mode));
+elements.inputEl.oninput = handleInputChange;
+elements.legInputEl.oninput = handleInputChange;
+elements.distB.oninput = handleInputChange;
+elements.distH.oninput = handleInputChange;
+elements.distW.oninput = handleInputChange;
+elements.distX.onchange = calcDist;
+elements.sizeEl.onchange = () => { calcElbow(); setTimeout(() => elements.inputEl.focus(), 100); };
+
+elements.saveBtn.onclick = () => saveToHistory('button');
+elements.distB.onkeydown = e => { if(e.key === "Enter") elements.distH.focus(); };
+elements.distH.onkeydown = e => { if(e.key === "Enter") elements.distW.focus(); };
+
 elements.clearAllBtn.onclick = () => { 
-    elements.modalMsg.textContent = `現在の「${elements.pageTitle.textContent.replace(' 計算', '')}」の履歴を全てクリアしますか？`;
+    elements.modalMsg.textContent = `現在の「${elements.pageTitle.textContent}」の履歴を全てクリアしますか？`;
     elements.modal.style.display = "flex"; 
 };
 elements.modalCancel.onclick = () => { elements.modal.style.display = "none"; };
@@ -515,21 +672,36 @@ elements.modalConfirm.onclick = () => {
     elements.modal.style.display = "none";
 };
 
+document.getElementById('dist-clear').onclick = () => {
+    [elements.distB, elements.distH, elements.distW].forEach(el => el.value = "");
+    elements.resultEl.textContent = "---";
+    elements.distDiagRes.textContent = "---";
+    elements.distB.focus();
+};
+
 [elements.inputEl, elements.legInputEl].forEach(el => {
-    el.onkeydown = (e) => {
-        if (e.key === "Enter") {
-            if (!elements.saveBtn.disabled) saveToHistory('enter');
-            el.blur();
-        }
-    }
-    el.onblur = () => {
-        if (!elements.saveBtn.disabled && el.value !== "" && el.value !== "0") {
-            if(currentCalculatedResult) saveToHistory('enter');
-        }
-    };
+    el.onkeydown = (e) => { if (e.key === "Enter") { saveToHistory('enter'); el.blur(); } }
+    el.onblur = () => { if (el.value !== "" && el.value !== "0") saveToHistory('enter'); };
 });
 
-window.onload = () => { calc(); renderHistory(); };
+// スワイプ操作
+let touchStartX = 0, touchStartY = 0;
+window.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].clientX;
+    touchStartY = e.changedTouches[0].clientY;
+}, { passive: true });
+window.addEventListener('touchend', (e) => {
+    if (['INPUT', 'SELECT'].includes(document.activeElement.tagName)) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX;
+    const diffY = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    if (diffY > 40) return;
+    const modes = ["80", "80-leg", "dist"];
+    const idx = modes.indexOf(currentMode);
+    if (diffX < -60 && idx < modes.length - 1) switchMode(modes[idx + 1]);
+    else if (diffX > 60 && idx > 0) switchMode(modes[idx - 1]);
+}, { passive: true });
+
+window.onload = () => { calcElbow(); renderHistory(); };
 </script>
 </body>
 </html>
