@@ -68,7 +68,7 @@
             background: transparent;
             color: var(--ios-silver-dark);
             font-size: 13px;
-            font-weight: 800;
+            font-weight: 600; 
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 11px;
             cursor: pointer;
@@ -94,7 +94,7 @@
             flex-direction: column;
         }
 
-        /* 独立した結果枠 (64px) */
+        /* 独立した結果枠 */
         .result-box {
             height: 64px;
             padding: 0 16px;
@@ -106,15 +106,15 @@
             border: 1.5px solid var(--ios-border);
             border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            transition: transform 0.1s;
+            transition: background 0.3s, transform 0.1s;
         }
         .result-box:active { transform: scale(0.98); }
 
-        .mode-80 .result-box-main { background: rgba(175, 82, 222, 0.2); border-color: var(--accent-80); }
-        .mode-80leg .result-box-main { background: rgba(0, 122, 255, 0.2); border-color: var(--accent-80leg); }
-        .mode-dist .result-box-main { background: rgba(48, 209, 88, 0.2); border-color: var(--accent-dist); }
+        .mode-80 .result-box-main { background: var(--accent-80); border-color: var(--accent-80); }
+        .mode-80leg .result-box-main { background: var(--accent-80leg); border-color: var(--accent-80leg); }
+        .mode-dist .result-box-main { background: var(--accent-dist); border-color: var(--accent-dist); }
 
-        /* セル形式グリッド (6カラム構成) */
+        /* セル形式グリッド */
         .cell-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -149,7 +149,7 @@
 
         .input-value {
             font-size: 26px;
-            font-weight: 900;
+            font-weight: 700; 
             color: #ffffff;
             flex: 1;
             text-align: right;
@@ -161,7 +161,7 @@
 
         .result-value {
             font-size: 40px; 
-            font-weight: 900;
+            font-weight: 700; 
             color: #ffffff;
             display: flex;
             align-items: baseline;
@@ -170,7 +170,7 @@
 
         .input-label-left {
             font-size: 13px;
-            font-weight: 900;
+            font-weight: 700; 
             color: var(--label-gray);
             margin-right: 4px;
             white-space: nowrap;
@@ -179,7 +179,7 @@
 
         .result-label-left {
             font-size: 13px;
-            font-weight: 900;
+            font-weight: 700; 
             color: #ffffff;
             text-align: left;
             line-height: 1.2;
@@ -216,8 +216,8 @@
             transition: background 0.1s;
         }
         .key-btn:active { background: #333; }
-        .key-btn.orange { background: var(--ios-orange); font-weight: 900; }
-        .key-btn.gray { background: #2c2c2e; color: var(--label-gray); font-size: 18px; font-weight: 700; }
+        .key-btn.orange { background: var(--ios-orange); font-weight: 700; } 
+        .key-btn.gray { background: #2c2c2e; color: var(--label-gray); font-size: 18px; font-weight: 600; } 
         
         #delete-btn-label { font-size: 36px; line-height: 1; }
         .mode-dist #delete-btn-label { font-size: 18px; }
@@ -225,8 +225,8 @@
         /* 履歴・フッター */
         .history-area { background: #000; padding: 12px; }
         .history-header {
-            font-size: 14px;
-            font-weight: 900;
+            font-size: 15px; 
+            font-weight: 700; 
             color: var(--label-gray);
             letter-spacing: 0.05em;
             margin-bottom: 12px;
@@ -260,14 +260,13 @@
         }
         .lock-btn.active { background: var(--ios-orange); color: white; }
 
-        /* フッターバー：フォントを細字(400)に変更 */
         .app-footer-bar {
             width: 100%;
             display: flex;
             justify-content: space-between;
             padding: 16px 4px 8px 4px;
             font-size: 13px;
-            font-weight: 400; /* 800から400に修正 */
+            font-weight: 400; 
             color: #666666;
             letter-spacing: 0.05em;
         }
@@ -320,7 +319,7 @@
             <div class="result-label-left" id="result-label">切寸法</div>
             <div class="result-value">
                 <span id="result-val">---</span>
-                <span class="text-sm font-bold opacity-60">mm</span>
+                <span class="text-sm font-bold opacity-70">mm</span>
             </div>
         </div>
 
@@ -402,16 +401,29 @@
         <!-- 距離計算図面 -->
         <div id="dist-diagram-wrapper" class="diagram-container hidden">
             <svg viewBox="0 0 360 210" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+                <!-- 管路本体 -->
                 <line x1="100" y1="10" x2="160" y2="10" stroke="white" stroke-width="2" />
                 <line x1="140" y1="10" x2="140" y2="25" stroke="white" stroke-width="2" />
                 <circle cx="140" cy="45" r="16.2" fill="none" stroke="white" stroke-width="2" />
                 <line x1="140" y1="45" x2="280" y2="125" stroke="white" stroke-width="3" />
                 <rect x="175" y="60" width="80" height="34" rx="6" fill="black" stroke="white" stroke-width="1.5" />
-                <text id="dist-diagram-result" x="215" y="84" fill="white" font-size="22" font-weight="900" text-anchor="middle">---</text>
+                <text id="dist-diagram-result" x="215" y="84" fill="white" font-size="22" font-weight="700" text-anchor="middle">---</text>
                 <circle cx="280" cy="125" r="16.2" fill="none" stroke="white" stroke-width="2" />
+
+                <!-- 直線距離 寸法補助線と寸法線 -->
+                <line x1="100" y1="10" x2="140" y2="10" stroke="#3b82f6" stroke-width="1" opacity="0.5" />
+                <line x1="100" y1="125" x2="280" y2="125" stroke="#3b82f6" stroke-width="1" opacity="0.5" />
                 <line x1="100" y1="10" x2="100" y2="125" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="95" y1="10" x2="105" y2="10" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="95" y1="125" x2="105" y2="125" stroke="#3b82f6" stroke-width="2.5" />
                 <text x="5" y="75" fill="#3b82f6" font-size="16" font-weight="bold">直線距離</text>
+
+                <!-- 移動寸法 寸法補助線と寸法線 -->
+                <line x1="140" y1="45" x2="140" y2="155" stroke="#3b82f6" stroke-width="1" opacity="0.5" />
+                <line x1="280" y1="125" x2="280" y2="155" stroke="#3b82f6" stroke-width="1" opacity="0.5" />
                 <line x1="140" y1="155" x2="280" y2="155" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="140" y1="150" x2="140" y2="160" stroke="#3b82f6" stroke-width="2.5" />
+                <line x1="280" y1="150" x2="280" y2="160" stroke="#3b82f6" stroke-width="2.5" />
                 <text x="210" y="195" fill="#3b82f6" font-size="16" font-weight="bold" text-anchor="middle">移動寸法</text>
             </svg>
         </div>
@@ -435,6 +447,7 @@
 <script>
     let currentTab = '80';
     let focusedInputId = 'main-input-80';
+    let isOverwriteMode = true; // 上書きモードフラグ
     const storageKey = 'kyowa_80_dist_unified_v7';
     
     const inputs = {
@@ -465,9 +478,9 @@
         if (target) {
             target.closest('.calc-cell').classList.add('focused');
             focusedInputId = internalId;
+            isOverwriteMode = true; // セル選択時に上書きモードを有効化
         }
 
-        // ボタンラベルの動的切り替え
         const enterLabel = document.getElementById('enter-btn-label');
         if (currentTab === '80leg') {
             enterLabel.innerText = (focusedInputId === 'leg-input-80leg') ? '⏎' : '保存';
@@ -480,21 +493,37 @@
 
     function pressKey(key) {
         let val = inputs[focusedInputId] || '';
+        
         if (key === 'clear') {
             val = '';
+            isOverwriteMode = true;
         } else if (key === 'backspace') {
-            if (currentTab === 'dist') { clearDistFields(); return; }
-            else { val = val.toString().slice(0, -1); }
+            if (currentTab === 'dist') { 
+                clearDistFields(); 
+                return; 
+            } else { 
+                val = val.toString().slice(0, -1); 
+                isOverwriteMode = false;
+            }
         } else if (key === 'enter') {
             handleEnter(); return;
-        } else if (key === '.') {
-            if (!val.toString().includes('.')) val += val === '' ? '0.' : '.';
         } else {
-            if (val === '0') val = key;
-            else val += key;
+            // 上書きまたは追加のロジック
+            if (isOverwriteMode) {
+                if (key === '.') val = '0.';
+                else val = key;
+                isOverwriteMode = false;
+            } else {
+                if (key === '.') {
+                    if (!val.toString().includes('.')) val += val === '' ? '0.' : '.';
+                } else {
+                    if (val === '0') val = key;
+                    else val += key;
+                }
+            }
         }
-        inputs[focusedInputId] = val;
         
+        inputs[focusedInputId] = val;
         const displayTarget = (focusedInputId.startsWith('main-input')) ? 'main-input' : (focusedInputId.startsWith('leg-input') ? 'leg-input' : focusedInputId);
         updateDisplay(displayTarget, val);
         
@@ -506,6 +535,7 @@
         ['dist-input-b', 'dist-input-h', 'dist-input-a'].forEach(id => { inputs[id] = ''; updateDisplay(id, ''); });
         distCalc();
         showToast("入力をクリアしました");
+        isOverwriteMode = true;
     }
 
     function handleEnter() {
@@ -639,7 +669,7 @@
         const sizeStr = sizeEl.options[sizeEl.selectedIndex].text;
         if (result === "---" || !inputs[inputKey]) return;
         const nonLockedCount = histories.filter(h => h.mode === currentTab && !h.locked).length;
-        if (nonLockedCount >= 3) {
+        if (nonLockedCount >= 10) {
             const oldestIdx = histories.findIndex(h => h.mode === currentTab && !h.locked);
             if (oldestIdx !== -1) histories.splice(oldestIdx, 1);
         }
@@ -656,7 +686,9 @@
         elbowCalc();
         renderHistory();
         showToast("保存しました");
+        isOverwriteMode = true; // 保存後、次の入力は新しい値から開始
         if(currentTab === '80leg') focusInput('leg-input');
+        else focusInput('main-input');
     }
 
     function toggleLock(id) {
@@ -685,7 +717,7 @@
             div.innerHTML = `
                 <button onclick="toggleLock(${item.id})" class="lock-btn ${item.locked ? 'active' : 'text-zinc-500'}">${lockIcon}</button>
                 <div class="flex flex-col flex-1">
-                    <span class="text-[12px] font-bold" style="color: var(--label-gray)">${item.size} / 寸:${item.input}${legText}</span>
+                    <span class="text-[14px] font-bold" style="color: var(--ios-silver)">${item.size} / 寸:${item.input}${legText}</span>
                     <span class="font-black text-2xl">${item.result}</span>
                 </div>
                 <button onclick="copyRaw('${item.result}')" class="p-3">
