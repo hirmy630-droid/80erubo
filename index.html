@@ -61,7 +61,7 @@
             font-weight: 600;
         }
 
-        /* タブ (スリム化) */
+        /* タブ */
         .tab-wrapper {
             position: sticky;
             top: 0;
@@ -134,7 +134,7 @@
         .mode-80leg .result-box-main { background: var(--accent-80leg); }
         .mode-dist .result-box-main { background: var(--accent-dist); }
 
-        /* セル形式グリッド - テンキーと連結 */
+        /* セル形式グリッド */
         .cell-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -208,7 +208,7 @@
             direction: rtl;
         }
 
-        /* テンキー - セルと連結 */
+        /* テンキー */
         .keypad-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -234,7 +234,7 @@
         .key-btn.orange { background: var(--ios-orange); font-weight: 700; } 
         .key-btn.gray { background: #2c2c2e; color: var(--label-gray); font-size: 18px; font-weight: 600; } 
         
-        #delete-btn-label { font-size: 32px; }
+        #delete-btn-label { font-size: 22px; }
 
         /* 履歴・図面 */
         .history-area { background: #000; padding: 12px; width: 100%; max-width: 420px; }
@@ -301,13 +301,11 @@
     <div id="toast">コピーしました</div>
 
     <div class="main-container">
-        <!-- ヘッダーデザイン -->
         <div class="app-header">
             <span class="title">80°エルボ計算</span>
             <span class="subtitle">KYOWA ROOF</span>
         </div>
 
-        <!-- タブ -->
         <div class="tab-wrapper">
             <div class="tab-container">
                 <button class="tab-button active" id="nav-80" onclick="switchTab('80')">80°エルボ</button>
@@ -316,7 +314,6 @@
             </div>
         </div>
 
-        <!-- 結果枠 -->
         <div class="result-box result-box-main" onclick="copyResult()">
             <div class="result-label-left" id="result-label">切寸法</div>
             <div class="result-value">
@@ -325,12 +322,12 @@
             </div>
         </div>
 
-        <!-- 入力グリッド -->
+        <!-- 入力セクション -->
         <div id="section-elbow">
             <div class="cell-grid">
                 <div class="calc-cell">
                     <span class="input-label-left">サイズ</span>
-                    <select id="elbow-size" class="input-value" onchange="elbowCalc()">
+                    <select id="elbow-size" class="input-value" onchange="syncAndCalcSize(this.value)">
                         <option value="75">75</option>
                         <option value="100" selected>100</option>
                         <option value="125">125</option>
@@ -345,7 +342,7 @@
                     <div id="leg-input" class="input-value">0</div>
                 </div>
                 <div class="calc-cell span-6 focused" id="cell-main-input" onclick="focusInput('main-input')">
-                    <span class="input-label-left">寸法</span>
+                    <span class="input-label-left">芯-芯寸法</span>
                     <div id="main-input" class="input-value">0</div>
                 </div>
             </div>
@@ -358,30 +355,29 @@
                     <div id="dist-input-b" class="input-value">0</div>
                 </div>
                 <div class="calc-cell span-3">
-                    <span class="input-label-left">選択</span>
-                    <select id="dist-select-x" class="input-value" onchange="distCalc()">
+                    <span class="input-label-left">サイズ</span>
+                    <select id="dist-select-x" class="input-value" onchange="syncAndCalcSize(this.options[this.selectedIndex].text)">
                         <option value="45">75</option>
                         <option value="57" selected>100</option>
                         <option value="70">125</option>
                     </select>
                 </div>
                 <div class="calc-cell span-3" id="cell-dist-h" onclick="focusInput('dist-input-h')">
-                    <span class="input-label-left">直線距離</span>
+                    <span class="input-label-left">直線</span>
                     <div id="dist-input-h" class="input-value">0</div>
                 </div>
                 <div class="calc-cell span-3" id="cell-dist-a" onclick="focusInput('dist-input-a')">
-                    <span class="input-label-left">移動寸法</span>
+                    <span class="input-label-left">移動</span>
                     <div id="dist-input-a" class="input-value">0</div>
                 </div>
             </div>
         </div>
 
-        <!-- テンキー -->
         <div class="keypad-container">
             <button class="key-btn" onclick="pressKey('7')">7</button>
             <button class="key-btn" onclick="pressKey('8')">8</button>
             <button class="key-btn" onclick="pressKey('9')">9</button>
-            <button class="key-btn gray" id="delete-btn-label" onclick="pressKey('backspace')">⇦</button>
+            <button class="key-btn gray" id="delete-btn-label" onclick="pressKey('backspace')">貼付</button>
             
             <button class="key-btn" onclick="pressKey('4')">4</button>
             <button class="key-btn" onclick="pressKey('5')">5</button>
@@ -423,7 +419,6 @@
             </svg>
         </div>
 
-        <!-- 履歴エリア -->
         <div id="history-area" class="history-area">
             <div id="history-content-wrapper">
                 <div class="history-header">
@@ -443,7 +438,7 @@
     let currentTab = '80';
     let focusedInputId = 'main-input-80';
     let isOverwriteMode = true;
-    const storageKey = 'kyowa_80_dist_unified_v7';
+    const storageKey = 'kyowa_80_dist_unified_v8';
     const lastTabKey = 'kyowa_80_last_tab';
     
     const inputs = {
@@ -460,6 +455,19 @@
     const elbowData = { 75: { d: 30, e: 82 }, 100: { d: 40, e: 103 }, 125: { d: 50, e: 130 } };
     const legConstants = { "75": 45, "100": 57, "125": 70 };
     const cos10 = Math.cos(10 * Math.PI / 180);
+
+    function syncAndCalcSize(val) {
+        document.getElementById('elbow-size').value = val;
+        const distSelect = document.getElementById('dist-select-x');
+        for(let i=0; i<distSelect.options.length; i++) {
+            if(distSelect.options[i].text === val) {
+                distSelect.selectedIndex = i;
+                break;
+            }
+        }
+        distCalc();
+        elbowCalc();
+    }
 
     function focusInput(id) {
         let internalId = id;
@@ -481,25 +489,42 @@
         if (currentTab === '80leg') {
             enterLabel.innerText = (focusedInputId === 'leg-input-80leg') ? '⏎' : '保存';
         } else if (currentTab === 'dist') {
-            enterLabel.innerText = (focusedInputId === 'dist-input-a') ? 'コピー' : '⏎';
+            enterLabel.innerText = '⏎';
         } else {
             enterLabel.innerText = '保存';
         }
     }
 
-    function pressKey(key) {
+    async function pressKey(key) {
         let val = inputs[focusedInputId] || '';
         
         if (key === 'clear') {
+            if (currentTab === 'dist') {
+                clearDistFields();
+                return;
+            }
             val = '';
-            isOverwriteMode = true;
+            isOverwriteMode = false;
         } else if (key === 'backspace') {
             if (currentTab === 'dist') { 
-                clearDistFields(); 
-                return; 
-            } else { 
-                val = val.toString().slice(0, -1); 
+                val = ''; 
                 isOverwriteMode = false;
+            } else { 
+                try {
+                    const text = await navigator.clipboard.readText();
+                    const cleanText = text.replace(/[^0-9.]/g, '');
+                    if (cleanText) {
+                        val = cleanText;
+                        isOverwriteMode = false;
+                        showToast("貼り付けました");
+                    } else {
+                        showToast("数値が見つかりません");
+                        return;
+                    }
+                } catch (err) {
+                    showToast("貼り付けに失敗しました");
+                    return;
+                }
             }
         } else if (key === 'enter') {
             handleEnter(); return;
@@ -529,22 +554,21 @@
     function clearDistFields() {
         ['dist-input-b', 'dist-input-h', 'dist-input-a'].forEach(id => { inputs[id] = ''; updateDisplay(id, ''); });
         distCalc();
-        showToast("入力をクリアしました");
+        showToast("すべてクリアしました");
         isOverwriteMode = true;
     }
 
     function handleEnter() {
-        if (currentTab === '80leg') {
-            if (focusedInputId === 'leg-input-80leg') focusInput('main-input');
-            else saveHistory();
-        } else if (currentTab === '80') {
-            saveHistory();
-        } else if (currentTab === 'dist') {
-            if (focusedInputId === 'dist-input-b') focusInput('dist-input-h');
-            else if (focusedInputId === 'dist-input-h') focusInput('dist-input-a');
-            else if (focusedInputId === 'dist-input-a') {
-                copyResult();
+        if (currentTab !== 'dist') {
+            if (currentTab === '80leg' && focusedInputId === 'leg-input-80leg') {
+                focusInput('main-input');
+            } else {
+                saveHistory();
             }
+        } else {
+            if (focusedInputId === 'dist-input-h') focusInput('dist-input-a');
+            else if (focusedInputId === 'dist-input-a') focusInput('dist-input-b');
+            else focusInput('dist-input-h');
         }
     }
 
@@ -588,14 +612,14 @@
             historyWrapper.classList.add('hidden');
             deleteBtn.innerText = 'C';
             document.getElementById('result-label').innerText = "芯-芯寸法";
-            focusInput('dist-input-b');
+            focusInput('dist-input-h'); 
             distCalc();
         } else {
             sectionElbow.classList.remove('hidden');
             sectionDist.classList.add('hidden');
             diagWrapper.classList.add('hidden');
             historyWrapper.classList.remove('hidden');
-            deleteBtn.innerText = '⇦';
+            deleteBtn.innerText = '貼付';
             document.getElementById('result-label').innerText = "切寸法";
             
             if (tabId === '80leg') {
@@ -619,43 +643,65 @@
 
     function elbowCalc() {
         const size = document.getElementById('elbow-size').value;
-        const { d, e } = elbowData[size];
+        const data = elbowData[size];
+        if(!data) return;
+        const { d, e } = data;
         document.getElementById('d-val').innerText = d;
-        const inputVal = parseFloat(inputs[`main-input-${currentTab}`]);
+        
+        // 常に元の計算式を維持 (入力値 / cos10)
+        const targetInputKey = (currentTab === 'dist') ? 'main-input-80' : `main-input-${currentTab}`;
+        const inputVal = parseFloat(inputs[targetInputKey]);
         const resultEl = document.getElementById('result-val');
         if (!inputVal) { resultEl.innerText = "---"; return; }
+        
         let f;
-        if (currentTab === '80') f = (inputVal / cos10) - ((e - d) * 2);
-        else {
-            const legVal = parseFloat(inputs[`leg-input-${currentTab}`]) || 0;
-            const c = inputVal - (legVal + legConstants[size]);
+        const modeForCalc = (currentTab === 'dist') ? '80' : currentTab;
+        if (modeForCalc === '80') {
+            f = (inputVal / cos10) - ((e - d) * 2);
+        } else {
+            const legVal = parseFloat(inputs[`leg-input-80leg`]) || 0;
+            const sizeConst = legConstants[size];
+            const c = inputVal - (legVal + sizeConst);
             f = (c / cos10) - ((e - d) * 2);
         }
-        resultEl.innerText = formatNum(Math.ceil(f));
+        
+        // 距離計算タブのときは結果表示を上書きしない
+        if (currentTab !== 'dist') {
+            resultEl.innerText = formatNum(Math.ceil(f));
+        }
     }
 
     function distCalc() {
-        const b = parseFloat(inputs['dist-input-b']) || 0;
-        const h = parseFloat(inputs['dist-input-h']);
-        const a = parseFloat(inputs['dist-input-a']);
-        const x = parseFloat(document.getElementById('dist-select-x').value);
+        // エルボ計算アプリと全く同じロジック
+        const b = parseFloat(inputs['dist-input-b']) || 0; 
+        const h = parseFloat(inputs['dist-input-h']);      
+        const a = parseFloat(inputs['dist-input-a']);      
+        const x = parseFloat(document.getElementById('dist-select-x').value); 
+        
         const resValEl = document.getElementById('result-val');
         const diagResEl = document.getElementById('dist-diagram-result');
+        
         if (isNaN(h) || isNaN(a)) {
-            resValEl.innerText = "---";
-            if(diagResEl) diagResEl.textContent = "---";
+            if (currentTab === 'dist') resValEl.innerText = "---";
+            if (diagResEl) diagResEl.textContent = "---";
             return;
         }
-        const A = h - (b + x);
-        const resultSq = (A * A) + (a * a);
-        if (resultSq < 0) {
-            resValEl.innerText = "エラー";
-            if(diagResEl) diagResEl.textContent = "ERR";
-        } else {
-            const res = Math.ceil(Math.sqrt(resultSq));
-            resValEl.innerText = formatNum(res);
-            if(diagResEl) diagResEl.textContent = formatNum(res);
+
+        // 芯-芯寸法 = sqrt((直線 - (足長 + エルボ))^2 + 移動^2)
+        const resultValueNum = Math.ceil(Math.sqrt(Math.pow(h - (b + x), 2) + Math.pow(a, 2)));
+        const resFormatted = formatNum(resultValueNum);
+        
+        if (currentTab === 'dist') {
+            resValEl.innerText = resFormatted;
+            if(diagResEl) diagResEl.textContent = resFormatted;
         }
+
+        // 連動
+        const resStr = resultValueNum.toString();
+        inputs['main-input-80'] = resStr;
+        inputs['main-input-80leg'] = resStr;
+
+        elbowCalc();
     }
 
     function saveHistory() {
@@ -665,27 +711,23 @@
         const sizeEl = document.getElementById('elbow-size');
         const sizeStr = sizeEl.options[sizeEl.selectedIndex].text;
         if (result === "---" || !inputs[inputKey]) return;
+        
         const nonLockedCount = histories.filter(h => h.mode === currentTab && !h.locked).length;
         if (nonLockedCount >= 10) {
             const oldestIdx = histories.findIndex(h => h.mode === currentTab && !h.locked);
             if (oldestIdx !== -1) histories.splice(oldestIdx, 1);
         }
+        
         histories.push({
             id: Date.now(), mode: currentTab, size: sizeStr, input: inputStr,
             leg: (currentTab === '80leg' ? formatNum(inputs[`leg-input-${currentTab}`]) : null),
             result, locked: false
         });
         localStorage.setItem(storageKey, JSON.stringify(histories));
-        inputs[inputKey] = '';
-        if(currentTab === '80leg') inputs[`leg-input-${currentTab}`] = '';
-        updateDisplay('main-input', '');
-        updateDisplay('leg-input', '');
-        elbowCalc();
+        
         renderHistory();
         showToast("保存しました");
         isOverwriteMode = true; 
-        if(currentTab === '80leg') focusInput('leg-input');
-        else focusInput('main-input');
     }
 
     function toggleLock(id) {
@@ -714,11 +756,11 @@
             div.innerHTML = `
                 <button onclick="toggleLock(${item.id})" class="lock-btn ${item.locked ? 'active' : 'text-zinc-500'}">${lockIcon}</button>
                 <div class="flex flex-col flex-1">
-                    <span class="text-[14px] font-bold" style="color: var(--ios-silver)">${item.size} / 寸:${item.input}${legText}</span>
+                    <span class="text-[14px] font-bold" style="color: var(--ios-silver)">${item.size} / 芯-芯:${item.input}${legText}</span>
                     <span class="font-black text-2xl">${item.result}</span>
                 </div>
-                <button onclick="copyRaw('${item.result}')" class="p-3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <button onclick=\"copyRaw('${item.result}')\" class=\"p-3\">
+                    <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#666\" stroke-width=\"2.5\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\" ry=\"2\"></rect><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"></path></svg>
                 </button>`;
             listEl.appendChild(div);
         });
@@ -731,7 +773,10 @@
         showToast("未保護の履歴を削除しました");
     }
 
-    function copyResult() { copyRaw(document.getElementById('result-val').innerText); }
+    function copyResult() { 
+        const val = document.getElementById('result-val').innerText;
+        copyRaw(val);
+    }
     function copyRaw(val) {
         if (val === "---" || val === "エラー") return;
         const cleanVal = val.replace(/,/g, "");
